@@ -1,5 +1,5 @@
 // +build ignore
 
-package kea
+package main
 
 // package docs

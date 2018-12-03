@@ -1,6 +1,9 @@
 package types
 
 import (
+	"database/sql/driver"
+	"encoding/binary"
+	"fmt"
 	"net"
 	"time"
 )
@@ -19,9 +22,36 @@ import (
 //    state bigint DEFAULT 0
 //);
 
+// wrapper around net.IP that has required SQL conversions
+type IPv4 struct {
+	net.IP
+}
+func (ip *IPv4)Scan(v interface{}) error {
+	switch ip_int := v.(type) {
+	case int64:
+		result := make(net.IP, 4)
+		ii := uint32(ip_int)
+		binary.BigEndian.PutUint32(result, ii)
+		ip.IP = result
+	default:
+		return fmt.Errorf("scan got type %T: %v, only int64 is supported\n", v, v)
+	}
+	return nil
+}
+
+func (i *IPv4) Value() (driver.Value, error)  {
+	ii := i.To4();
+	if ii == nil {
+		return nil, fmt.Errorf("can't convert IP: %v to integer", i)
+	}
+	ipInt := binary.BigEndian.Uint32(ii)
+	return int64(ipInt),nil
+}
+
 type Lease4 struct {
-	Address net.IP `gorm:"column:address;"`
-	Hwaddr net.HardwareAddr `gorm:"column:hwaddr"`
+	Address *IPv4 `gorm:"column:address"`
+	//Address *IPv4 `gorm:"column:address;primary_key"`
+	Hwaddr net.HardwareAddr `gorm:"column:hwaddr;primary_key"`
 	ClientID []byte `gorm:"column:client_id"`
 	// lease length in seconds
 	ValidLifetime int `gorm:"column:valid_lifetime"`

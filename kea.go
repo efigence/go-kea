@@ -56,7 +56,7 @@ func (k *Kea) Add(host Host) error {
 }
 
 func (k *Kea) ListBySubnetID(subnetId int) (hosts []Host, err error) {
-	result := k.db.Where(&Host{SubnetId: subnetId}).Find(&hosts)
+	result := k.db.Where(&schema.Host{DHCP4SubnetId: subnetId}).Find(&hosts)
 	return hosts, result.Error
 }
 

@@ -1,4 +1,4 @@
-package types
+package schema
 
 import (
 	"database/sql/driver"
@@ -83,16 +83,18 @@ type Lease4 struct {
 //);
 
 type Host struct {
-	HostId              int              `gorm:"column:host_id;not null"`
-	DHCPIdentifier      []byte           `gorm:"column:dhcp_identifier;not null"`
-	DHCPIdentifierType  int16            `gorm:"column:dhcp_identifier_type;not null;type:smallint"`
-	DHCP4SubnetId       int              `gorm:"column:dhcp4_subnet_id"`
-	DHCP6SubnetId       int              `gorm:"column:dhcp6_subnet_id"`
-	IPV4Address         net.HardwareAddr `gorm:"column:ipv4_address;type:bigint"`
-	Hostname            string           `gorm:"column:hostname;type:varchar(255)"`
-	DHCP4ClientClasses  string           `gorm:"column:dhcp4_client_classes;type:varchar(255)"`
-	DHCP6ClientClasses  string           `gorm:"column:dhcp6_client_classes;type:varchar(255)"`
-	DHCP4NextServer     int              `gorm:"column:dhcp4_next_server"`
-	DHCP4ServerHostname string           `gorm:"column:dhcp4_server_hostname;type:varchar(64)"`
-	DHCP4BootFileName   string           `gorm:"column:dhcp4_boot_file_name;type:varchar(128)"`
+	HostId int `gorm:"column:host_id;not null"`
+	// MAC
+	DHCPIdentifier Macaddr `gorm:"column:dhcp_identifier;not null"`
+	// 0 for DHCP
+	DHCPIdentifierType  int16  `gorm:"column:dhcp_identifier_type;not null;type:smallint"`
+	DHCP4SubnetId       int    `gorm:"column:dhcp4_subnet_id"`
+	DHCP6SubnetId       int    `gorm:"column:dhcp6_subnet_id"`
+	IPV4Address         uint32 `gorm:"column:ipv4_address;type:bigint"`
+	Hostname            string `gorm:"column:hostname;type:varchar(255)"`
+	DHCP4ClientClasses  string `gorm:"column:dhcp4_client_classes;type:varchar(255)"`
+	DHCP6ClientClasses  string `gorm:"column:dhcp6_client_classes;type:varchar(255)"`
+	DHCP4NextServer     int    `gorm:"column:dhcp4_next_server"`
+	DHCP4ServerHostname string `gorm:"column:dhcp4_server_hostname;type:varchar(64)"`
+	DHCP4BootFileName   string `gorm:"column:dhcp4_boot_file_name;type:varchar(128)"`
 }

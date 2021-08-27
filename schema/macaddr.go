@@ -3,6 +3,7 @@ package schema
 import (
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"net"
 )
 
@@ -45,8 +46,7 @@ func (m *Macaddr) Scan(value interface{}) error {
 // or m.HardwareAddr is nil the database column value will be set to NULL.
 func (m Macaddr) Value() (driver.Value, error) {
 	if m.HardwareAddr == nil {
-		panic(m)
-		return nil, nil
+		return nil, fmt.Errorf("hardware address is nil")
 	}
 	return []byte(m.HardwareAddr.String()), nil
 }

@@ -39,7 +39,7 @@ func (k *Kea) Add(host Host) error {
 	if err != nil {
 		return err
 	}
-	k.db.Create(schema.Host{
+	res := k.db.Create(schema.Host{
 		//HostId:              0,
 		DHCPIdentifier:     dbMac,
 		DHCPIdentifierType: 0, // 0 is MAC
@@ -52,7 +52,20 @@ func (k *Kea) Add(host Host) error {
 		//DHCP4ServerHostname: "",
 		//DHCP4BootFileName:   "",
 	})
-	return nil
+	return res.Error
+}
+
+func (k *Kea) Delete(ip net.IP, mac []byte) error {
+	dbMac := schema.Macaddr{HardwareAddr: mac}
+	ipInt, err := ip4toInt(ip)
+	if err != nil {
+		return err
+	}
+	res := k.db.Delete(schema.Host{
+		DHCPIdentifier: dbMac,
+		IPV4Address:    ipInt,
+	})
+	return res.Error
 }
 
 func (k *Kea) ListBySubnetID(subnetId int) (hosts []Host, err error) {

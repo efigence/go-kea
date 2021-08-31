@@ -52,8 +52,8 @@ func (i *IPv4) Value() (driver.Value, error) {
 type Lease4 struct {
 	Address *IPv4 `gorm:"column:address"`
 	//Address *IPv4 `gorm:"column:address;primary_key"`
-	Hwaddr   net.HardwareAddr `gorm:"column:hwaddr;primary_key"`
-	ClientID []byte           `gorm:"column:client_id"`
+	Hwaddr   []byte `gorm:"column:hwaddr;primary_key"`
+	ClientID []byte `gorm:"column:client_id"`
 	// lease length in seconds
 	ValidLifetime int       `gorm:"column:valid_lifetime"`
 	Expire        time.Time `gorm:"column:expire"`
@@ -65,6 +65,10 @@ type Lease4 struct {
 	FwdnRev  bool   `gorm:"column:fqdn_rev"`
 	Hostname string `gorm:"column:hostname;type:varchar(255)"`
 	State    int    `gorm:"column:state;DEFAULT:0"`
+}
+
+func (h *Lease4) Macaddr() net.HardwareAddr {
+	return h.Hwaddr
 }
 
 //CREATE TABLE public.hosts (
@@ -83,9 +87,9 @@ type Lease4 struct {
 //);
 
 type Host struct {
-	HostId int `gorm:"column:host_id;not null"`
+	HostId int `gorm:"column:host_id;not null,autoIncrement"`
 	// MAC
-	DHCPIdentifier Macaddr `gorm:"column:dhcp_identifier;not null"`
+	DHCPIdentifier []byte `gorm:"column:dhcp_identifier;not null"`
 	// 0 for DHCP
 	DHCPIdentifierType  int16  `gorm:"column:dhcp_identifier_type;not null;type:smallint"`
 	DHCP4SubnetId       int    `gorm:"column:dhcp4_subnet_id"`
@@ -97,4 +101,8 @@ type Host struct {
 	DHCP4NextServer     int    `gorm:"column:dhcp4_next_server"`
 	DHCP4ServerHostname string `gorm:"column:dhcp4_server_hostname;type:varchar(64)"`
 	DHCP4BootFileName   string `gorm:"column:dhcp4_boot_file_name;type:varchar(128)"`
+}
+
+func (h *Host) Macaddr() net.HardwareAddr {
+	return h.DHCPIdentifier
 }

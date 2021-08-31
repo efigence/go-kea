@@ -34,14 +34,19 @@ func New(cfg Config) (*Kea, error) {
 }
 
 func (k *Kea) Add(host Host) error {
-	dbMac := schema.Macaddr{host.Macaddr}
-	ipInt, err := ip4toInt(host.IP)
+	ipInt, err := ip4ToInt(host.IP)
 	if err != nil {
 		return err
 	}
-	res := k.db.Create(schema.Host{
+	res := k.db.Select(
+		"DHCPIdentifier",
+		"DHCPIdentifierType",
+		"DHCP4SubnetId",
+		"IPV4Address",
+		"Hostname",
+	).Create(schema.Host{
 		//HostId:              0,
-		DHCPIdentifier:     dbMac,
+		DHCPIdentifier:     host.Macaddr,
 		DHCPIdentifierType: 0, // 0 is MAC
 		DHCP4SubnetId:      host.SubnetId,
 		IPV4Address:        ipInt,
@@ -56,20 +61,30 @@ func (k *Kea) Add(host Host) error {
 }
 
 func (k *Kea) Delete(ip net.IP, mac []byte) error {
-	dbMac := schema.Macaddr{HardwareAddr: mac}
-	ipInt, err := ip4toInt(ip)
+	ipInt, err := ip4ToInt(ip)
 	if err != nil {
 		return err
 	}
-	res := k.db.Delete(schema.Host{
-		DHCPIdentifier: dbMac,
+	res := k.db.Where(schema.Host{
+		DHCPIdentifier: mac,
 		IPV4Address:    ipInt,
-	})
+	}).Delete(schema.Host{})
 	return res.Error
 }
 
 func (k *Kea) ListBySubnetID(subnetId int) (hosts []Host, err error) {
-	result := k.db.Where(&schema.Host{DHCP4SubnetId: subnetId}).Find(&hosts)
+	h := []schema.Host{}
+	result := k.db.Where(&schema.Host{DHCP4SubnetId: subnetId}).Find(&h)
+	hosts = make([]Host, len(h))
+	for id, host := range h {
+		ip := intToIPv4(host.IPV4Address)
+		hosts[id] = Host{
+			Hostname: host.Hostname,
+			Macaddr:  host.DHCPIdentifier,
+			IP:       ip,
+			SubnetId: host.DHCP4SubnetId,
+		}
+	}
 	return hosts, result.Error
 }
 
@@ -77,10 +92,15 @@ func (k *Kea) ListBySubnetID(subnetId int) (hosts []Host, err error) {
 //	k.db.Raw("SELECT count(*),dhcp4_subnet_id from hosts group by dhcp_subnet_id", 3).Scan(&result)
 //}
 
-func ip4toInt(ipAddr net.IP) (uint32, error) {
+func ip4ToInt(ipAddr net.IP) (uint32, error) {
 	ip := ipAddr.To4()
 	if ip == nil {
 		return 0, fmt.Errorf("couldn't convert to IPv4")
 	}
 	return binary.BigEndian.Uint32(ip), nil
+}
+func intToIPv4(nn uint32) net.IP {
+	ip := make(net.IP, 4)
+	binary.BigEndian.PutUint32(ip, nn)
+	return ip
 }
